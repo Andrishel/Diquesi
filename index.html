@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tengo una pregunta para ti... ✨</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    body {
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background: linear-gradient(135deg, #a8edf0 0%, #fed6e3 100%);
+      padding: 20px;
+      overflow: hidden;
+    }
+
+    .card {
+      background: rgba(255, 255, 255, 0.92);
+      backdrop-filter: blur(8px);
+      padding: 30px 24px;
+      border-radius: 24px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+      text-align: center;
+      max-width: 400px;
+      width: 100%;
+      position: relative;
+    }
+
+    .card img {
+      width: 100%;
+      max-height: 200px;
+      object-fit: cover;
+      border-radius: 16px;
+      margin-bottom: 20px;
+    }
+
+    h1 {
+      color: #2c3e50;
+      font-size: 1.4rem;
+      margin-bottom: 24px;
+      line-height: 1.4;
+    }
+
+    .btn-group {
+      display: flex;
+      justify-content: center;
+      gap: 16px;
+      align-items: center;
+      min-height: 60px;
+      position: relative;
+    }
+
+    button {
+      padding: 14px 28px;
+      font-size: 1rem;
+      font-weight: 600;
+      border: none;
+      border-radius: 50px;
+      cursor: pointer;
+      transition: transform 0.2s ease, background-color 0.2s ease;
+    }
+
+    #btn-yes {
+      background-color: #ff4b72;
+      color: white;
+      box-shadow: 0 4px 15px rgba(255, 75, 114, 0.4);
+      z-index: 2;
+    }
+
+    #btn-yes:active {
+      transform: scale(0.95);
+    }
+
+    #btn-no {
+      background-color: #e0e0e0;
+      color: #555;
+      position: relative;
+      transition: all 0.2s ease;
+    }
+
+    /* Modal / Alerta personalizada */
+    .modal-overlay {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0, 0, 0, 0.4);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 100;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s ease;
+    }
+
+    .modal-overlay.active {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .modal-box {
+      background: white;
+      padding: 24px;
+      border-radius: 20px;
+      max-width: 300px;
+      width: 85%;
+      text-align: center;
+      transform: translateY(20px);
+      transition: transform 0.3s ease;
+    }
+
+    .modal-overlay.active .modal-box {
+      transform: translateY(0);
+    }
+
+    .modal-box p {
+      font-size: 1.1rem;
+      color: #333;
+      margin-bottom: 18px;
+    }
+
+    .modal-box button {
+      background-color: #ff4b72;
+      color: white;
+      padding: 10px 24px;
+    }
+
+    /* Pantalla final de éxito */
+    .hidden {
+      display: none;
+    }
+
+    .celebration h2 {
+      color: #ff4b72;
+      margin-bottom: 12px;
+    }
+
+    .celebration p {
+      color: #555;
+      font-size: 1.05rem;
+      line-height: 1.5;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="card" id="main-card">
+    <img src="https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=600&q=80" alt="Playa">
+    <h1>¿Aceptas ir a la playa conmigo este fin de semana? 🏖️✨</h1>
+    
+    <div class="btn-group" id="btn-container">
+      <button id="btn-yes">¡Sí, obvio! 💖</button>
+      <button id="btn-no">No 🙈</button>
+    </div>
+  </div>
+
+<!-- Pantalla de Éxito Actualizada -->
+  <div class="card hidden" id="success-card">
+    <img src="https://images.unsplash.com/photo-1518495973542-4542c06a5843?auto=format&fit=crop&w=600&q=80" alt="Atardecer en la playa">
+    <div class="celebration">
+      <h2>¡Sabía que dirías que sí! 🎉💖</h2>
+      <p style="margin-bottom: 12px; font-weight: 600; color: #2c3e50;">
+        📍 Cita: Sábado 15 de agosto a las 3:00 PM
+      </p>
+      <p style="font-size: 0.95rem; line-height: 1.6;">
+        Ponte más guapa de lo que ya eres ✨. Prepara tu bikini, lentes de sol y el bronceador, ¡que el mar nos espera! 🌊☀️
+      </p>
+    </div>
+  </div>
+
+  <!-- Modal emergente -->
+  <div class="modal-overlay" id="modal">
+    <div class="modal-box">
+      <p id="modal-text">¿Estás segura? 😉</p>
+      <button id="modal-close">Intentar de nuevo</button>
+    </div>
+  </div>
+
+  <script>
+    const btnNo = document.getElementById('btn-no');
+    const btnYes = document.getElementById('btn-yes');
+    const modal = document.getElementById('modal');
+    const modalText = document.getElementById('modal-text');
+    const modalClose = document.getElementById('modal-close');
+    const mainCard = document.getElementById('main-card');
+    const successCard = document.getElementById('success-card');
+
+    let scaleFactor = 1;
+    const messages = [
+      "¿En serio? Piénsalo bien... 🤔",
+      "¡Esa opción está bloqueada! 😜",
+      "¿Segura? El mar está esperándonos 🌊",
+      "¡Ese botón no funciona correctamente! Try again 😂",
+      "¡Acepta el 'Sí' de una vez! ✨"
+    ];
+
+    let messageIndex = 0;
+
+    function moveButton() {
+      // Calculamos posiciones aleatorias dentro del viewport visible
+      const padding = 20;
+      const maxX = window.innerWidth - btnNo.offsetWidth - padding;
+      const maxY = window.innerHeight - btnNo.offsetHeight - padding;
+
+      const randomX = Math.max(padding, Math.floor(Math.random() * maxX));
+      const randomY = Math.max(padding, Math.floor(Math.random() * maxY));
+
+      btnNo.style.position = 'fixed';
+      btnNo.style.left = `${randomX}px`;
+      btnNo.style.top = `${randomY}px`;
+
+      // Hacemos crecer el botón de "Sí" para incentivar la respuesta
+      scaleFactor += 0.15;
+      btnYes.style.transform = `scale(${scaleFactor})`;
+    }
+
+    btnNo.addEventListener('click', () => {
+      // Mostrar alerta modal personalizada
+      modalText.textContent = messages[messageIndex % messages.length];
+      messageIndex++;
+      modal.classList.add('active');
+      moveButton();
+    });
+
+    modalClose.addEventListener('click', () => {
+      modal.classList.remove('active');
+    });
+
+    btnYes.addEventListener('click', () => {
+      mainCard.classList.add('hidden');
+      successCard.classList.remove('hidden');
+    });
+  </script>
+</body>
+</html>
